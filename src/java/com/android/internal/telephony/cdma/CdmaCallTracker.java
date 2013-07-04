@@ -75,6 +75,10 @@ public final class CdmaCallTracker extends CallTracker {
 
     CdmaConnection pendingMO;
     boolean hangupPendingMO;
+
+    //Used to re-request the list of current calls
+    boolean slow_modem = (SystemProperties.getInt("ro.telephony.slow_modem",0) != 0);
+
     boolean pendingCallInEcm=false;
     boolean mIsInEmergencyCall = false;
     CDMAPhone phone;
@@ -496,6 +500,18 @@ public final class CdmaCallTracker extends CallTracker {
         boolean needsPollDelay = false;
         boolean unknownConnectionAppeared = false;
 
+        if (slow_modem) {
+            if (polledCalls.size() == 0 && !hangupPendingMO){
+                try {
+                   Thread.sleep(250);
+                }  catch(InterruptedException ex) {
+                     Thread.currentThread().interrupt();
+                }
+                lastRelevantPoll = obtainMessage(EVENT_POLL_CALLS_RESULT);
+                cm.getCurrentCalls(lastRelevantPoll);
+                return;
+            }
+        }
         for (int i = 0, curDC = 0, dcSize = polledCalls.size()
                 ; i < connections.length; i++) {
             CdmaConnection conn = connections[i];
@@ -829,6 +845,7 @@ public final class CdmaCallTracker extends CallTracker {
                     "does not belong to CdmaCallTracker " + this);
         }
 
+        hangupPendingMO = true;
         call.onHangupLocal();
         phone.notifyPreciseCallStateChanged();
     }
