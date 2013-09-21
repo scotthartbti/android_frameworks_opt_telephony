@@ -1222,29 +1222,13 @@ public final class DataConnection extends StateMachine {
                             if (DBG) {
                                 log("DcActivatingState: ERR_RilError "
                                         + " delay=" + delay
-                                        + " isRetryNeeded=" + mRetryManager.isRetryNeeded()
-                                        + " result=" + result
-                                        + " result.isRestartRadioFail=" +
-                                                result.mFailCause.isRestartRadioFail()
-                                        + " result.isPermanentFail=" +
-                                                result.mFailCause.isPermanentFail());
+                                        + " isRetryNeeded=" + mRetryManager.isRetryNeeded());
                             }
-                            if (result.mFailCause.isRestartRadioFail()) {
-                                if (DBG) log("DcActivatingState: ERR_RilError restart radio");
-                                mDct.sendRestartRadio();
-                                mInactiveState.setEnterNotificationParams(cp, result.mFailCause);
-                                transitionTo(mInactiveState);
-                            } else if (result.mFailCause.isPermanentFail()) {
-                                if (DBG) log("DcActivatingState: ERR_RilError perm error");
-                                mInactiveState.setEnterNotificationParams(cp, result.mFailCause);
-                                transitionTo(mInactiveState);
-                            } else if (delay >= 0) {
-                                if (DBG) log("DcActivatingState: ERR_RilError retry");
+                            if (delay >= 0) {
                                 mDcRetryAlarmController.startRetryAlarm(EVENT_RETRY_CONNECTION,
                                                             mTag, delay);
                                 transitionTo(mRetryingState);
                             } else {
-                                if (DBG) log("DcActivatingState: ERR_RilError no retry");
                                 mInactiveState.setEnterNotificationParams(cp, result.mFailCause);
                                 transitionTo(mInactiveState);
                             }
@@ -1284,25 +1268,13 @@ public final class DataConnection extends StateMachine {
                                     + " isRetryNeeded=" + mRetryManager.isRetryNeeded()
                                     + " dc=" + DataConnection.this);
                         }
-                        if (cause.isRestartRadioFail()) {
-                            if (DBG) {
-                                log("DcActivatingState: EVENT_GET_LAST_FAIL_DONE"
-                                        + " restart radio");
-                            }
-                            mDct.sendRestartRadio();
-                            mInactiveState.setEnterNotificationParams(cp, cause);
-                            transitionTo(mInactiveState);
-                        } else if (cause.isPermanentFail()) {
-                            if (DBG) log("DcActivatingState: EVENT_GET_LAST_FAIL_DONE perm er");
-                            mInactiveState.setEnterNotificationParams(cp, cause);
-                            transitionTo(mInactiveState);
-                        } else if ((retryDelay >= 0) && (mRetryManager.isRetryNeeded())) {
-                            if (DBG) log("DcActivatingState: EVENT_GET_LAST_FAIL_DONE retry");
+                        if (mRetryManager.isRetryNeeded()) {
                             mDcRetryAlarmController.startRetryAlarm(EVENT_RETRY_CONNECTION, mTag,
                                                             retryDelay);
                             transitionTo(mRetryingState);
                         } else {
-                            if (DBG) log("DcActivatingState: EVENT_GET_LAST_FAIL_DONE no retry");
+                            // Transition to inactive but send notifications after
+                            // we've entered the mInactive state.
                             mInactiveState.setEnterNotificationParams(cp, cause);
                             transitionTo(mInactiveState);
                         }

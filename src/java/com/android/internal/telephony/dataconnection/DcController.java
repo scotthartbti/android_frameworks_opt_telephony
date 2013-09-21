@@ -224,18 +224,8 @@ class DcController extends StateMachine {
                     if (DBG) log("onDataStateChanged: Found ConnId=" + newState.cid
                             + " newState=" + newState.toString());
                     if (newState.active == DATA_CONNECTION_ACTIVE_PH_LINK_INACTIVE) {
-                        DcFailCause failCause = DcFailCause.fromInt(newState.status);
-                        if (DBG) log("onDataStateChanged: inactive failCause=" + failCause);
-                        if (failCause.isRestartRadioFail()) {
-                            if (DBG) log("onDataStateChanged: X restart radio");
-                            mDct.sendRestartRadio();
-                        } else if (failCause.isPermanentFail()) {
-                            if (DBG) log("onDataStateChanged: inactive, add to cleanup list");
-                            apnsToCleanup.addAll(dc.mApnContexts);
-                        } else {
-                            if (DBG) log("onDataStateChanged: inactive, add to retry list");
-                            dcsToRetry.add(dc);
-                        }
+                        if (DBG) log("onDataStateChanged: inactive, add to retry list");
+                        dcsToRetry.add(dc);
                     } else {
                         // Its active so update the DataConnections link properties
                         UpdateLinkPropertyResult result = dc.updateLinkProperty(newState);
