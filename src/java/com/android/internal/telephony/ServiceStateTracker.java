@@ -191,6 +191,8 @@ public abstract class ServiceStateTracker extends Handler {
         "tg", // Togo
     };
 
+    private ArrayList<CellInfoResult> mCellInfoWaitList;
+
     private class CellInfoResult {
         List<CellInfo> list;
         Object lockObj = new Object();
@@ -204,6 +206,7 @@ public abstract class ServiceStateTracker extends Handler {
         mPhoneBase = phoneBase;
         mCellInfo = cellInfo;
         mCi = ci;
+        mCellInfoWaitList = new ArrayList<CellInfoResult>();
         mVoiceCapable = mPhoneBase.getContext().getResources().getBoolean(
                 com.android.internal.R.bool.config_voice_capable);
         mUiccController = UiccController.getInstance();
@@ -219,6 +222,13 @@ public abstract class ServiceStateTracker extends Handler {
         mCi.unSetOnSignalStrengthUpdate(this);
         mUiccController.unregisterForIccChanged(this);
         mCi.unregisterForCellInfoList(this);
+        for (CellInfoResult result : mCellInfoWaitList) {
+            synchronized(result.lockObj) {
+                result.list = null;
+                result.lockObj.notify();
+            }
+        }
+        mCellInfoWaitList.clear();
     }
 
     public boolean getDesiredPowerState() {
@@ -417,6 +427,7 @@ public abstract class ServiceStateTracker extends Handler {
                     mLastCellInfoListTime = SystemClock.elapsedRealtime();
                     mLastCellInfoList = result.list;
                     result.lockObj.notify();
+                    mCellInfoWaitList.remove(result);
                 }
                 break;
             }
@@ -722,10 +733,12 @@ public abstract class ServiceStateTracker extends Handler {
                     synchronized(result.lockObj) {
                         mCi.getCellInfoList(msg);
                         try {
+                            mCellInfoWaitList.add(result);
                             result.lockObj.wait();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                             result.list = null;
+                            mCellInfoWaitList.remove(result);
                         }
                     }
                 } else {
