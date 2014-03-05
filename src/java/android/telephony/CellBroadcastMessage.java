@@ -65,6 +65,7 @@ public class CellBroadcastMessage implements Parcelable {
         mSmsCbMessage = new SmsCbMessage(in);
         mDeliveryTime = in.readLong();
         mIsRead = (in.readInt() != 0);
+        mSubId = in.readInt();
     }
 
     /** Parcelable: no special flags. */
@@ -78,6 +79,7 @@ public class CellBroadcastMessage implements Parcelable {
         mSmsCbMessage.writeToParcel(out, flags);
         out.writeLong(mDeliveryTime);
         out.writeInt(mIsRead ? 1 : 0);
+        out.writeInt(mSubId);
     }
 
     public static final Parcelable.Creator<CellBroadcastMessage> CREATOR
