@@ -1911,4 +1911,13 @@ public final class CallManager {
         b.append("\n}");
         return b.toString();
     }
+
+    public void setSubInConversation(int subscription) {
+        Rlog.e(LOG_TAG, " setSubInConversation not supported");
+    }
+
+    public int getSubInConversation() {
+        Rlog.e(LOG_TAG, " getSubInConversation not supported");
+        return 0;
+    }
 }
